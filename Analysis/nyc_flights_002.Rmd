@@ -1,7 +1,9 @@
 ---
 title: "Experiment 2: NYC airline data-Group visualization"
-data: 2023-09-11
-output: html_notebook
+data: "2023-09-11"
+output:
+  html_document:
+    df_print: paged
 ---
 
 
