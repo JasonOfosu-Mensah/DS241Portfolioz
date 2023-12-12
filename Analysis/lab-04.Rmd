@@ -1,0 +1,156 @@
+---
+title: "Lab 04 - La Quinta is Spanish for next to Denny's, Pt. 1"
+author: "Jason Ofosu-Mensah"
+date: "10/11/23", REVISED "10/16/23"
+output: github_document
+---
+
+### Load packages and data
+
+```{r load-packages, message = FALSE}
+library(tidyverse) 
+library(dsbox) 
+```
+
+```{r load-data, message = FALSE}
+states <- read_csv("C:/Users/jethu/Documents/R Studio - DS 241/Assignments/ds241_f23/data_raw/states/states.csv")
+dennys <- read_csv("C:/Users/jethu/Documents/R Studio - DS 241/Assignments/ds241_f23/data_raw/dennys/dennys.csv")
+laquinta <- read_csv("C:/Users/jethu/Documents/R Studio - DS 241/Assignments/ds241_f23/data_raw/laquinta/laquinta.csv")
+
+```
+
+### Exercise 1
+
+```{r}
+# Each row within the Denny's set represents the various Denny's locations within the U.S
+nrow(dennys)
+
+#Each column within the Denny's set represents the metadata for the various locations like their; address, city, state, zip-code, longitudinal and latitudinal coordinators at which they are.
+ncol(dennys)
+# their are about 1643 Dennys locations within the U.S, as of the year 2014
+View(dennys)
+# Fun Fact: as of October 2023, their are about 1,646 Dennys restaurants within the U.S
+```
+
+Don't forget to label your code chunk.
+
+### Exercise 2
+```{r}
+# Each row within the Laquinta's set represents the various Laquinta's locations within the U.S
+nrow(laquinta)
+#Each column within the Laquinta's set represents the metadata for the various locations like their; address, city, state, zip-code, longitudinal and latitudinal coordinators at which they are.
+ncol(laquinta)
+# their are about 909 Laquinta locations within the U.S, as of the year 2014
+View(laquinta)
+# Fun Fact: there are 909 La Quinta locations in the United States as of August 22, 2023.
+```
+
+### Exercise 3
+```{r}
+# There are about 2 La Quintas in Asia (China), 2 in Australia & the Pacific Rim (New Zealand), 3 in Europe (Turkey), 1 in the middle east (UAE), 3 in South America (Chile, Colombia, Ecuador), 2 in Canada (British Colombia, Ontario), and 6 in Mexico.
+
+# I couldn't find any locations on the dennys website, so I went to https://www.statista.com/statistics/947495/number-of-dennys-restaurants/, and found that as 2023, there are about 84 dennys in Canada, 15 in mexico, 10 in the Philippines, 7 in new zealand, 6 in Honduras, 5 in the UAE, 4 in Guatemala, 2 in el Salvador, 2 in Guam, 2 in Indonesia, 15 in puerile Rico (island) and 1 in costa rica
+```
+
+### Exercise 4
+```{r}
+#We could sort each state into a category of the US, we could also group_by each country
+```
+
+
+### Exercise 5
+
+```{r}
+dennys %>%
+  filter(!(state %in% states$abbreviation))
+```
+
+
+### Exercise 6
+
+```{r}
+dennys %>%
+  mutate(country = "United States")
+```
+
+
+### Exercise 7
+```{r}
+# There are about 2 La Quintas in Asia (China), 2 in Australia & the Pacific Rim (New Zealand), 3 in Europe (Turkey), 1 in the middle east (UAE), 3 in South America (Chile, Colombia, Ecuador), 2 in Canada (British Colombia, Ontario), and 6 in Mexico.
+```
+
+### Exercise 8
+```{r}
+laquinta %>%
+  mutate(country = case_when(
+    state %in% state.abb ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT" ~ "Colombia", 
+    state %in% c("AG","QR","CH","NL","VE","PU","SL") ~ "Mexico",
+    state == "FM" ~ "Honduras"
+  ))
+
+
+### "Error here, the object country is not found"
+#laquinta <- laquinta %>%
+ # filter(country == "United States")
+```
+
+### Exercise 9
+```{r}
+# Due to the information at the Dennys website, California has the most and has Alaska has the least
+view(dennys)
+
+dennys %>%
+  count(state)%>%
+  inner_join(states, by = c("state" = "abbreviation"))
+  
+```
+
+
+### Exercise 10
+```{r}
+# Every Dennys and La Quinta locations within the United States as of the year 2014
+dennys <- dennys %>%
+  mutate(establishment = "Denny's")
+laquinta <- laquinta %>%
+  mutate(establishment = "La Quinta")
+
+  
+
+dn_lq <- bind_rows(dennys,laquinta)
+
+ggplot(dn_lq, mapping = aes(x=longitude, y = latitude, color = establishment)) + geom_point()
+```
+
+### Exercise 11
+```{r}
+# Every Dennys and La Quinta locations within the State of North Carolina,USA as of the year 2014
+NC1 <- dennys |>
+  filter(state == "NC")
+
+NC2 <- laquinta |>
+  filter(state == "NC")
+
+dennys <- NC1 %>%
+  mutate(establishmentA = "Denny's")
+
+laquinta <- NC2 %>%
+  mutate(establishmentA = "La Quinta")
+
+dn_lq <- bind_rows(dennys,laquinta)
+
+ggplot(dn_lq, mapping = aes(x=longitude, y = latitude, color = establishmentA)) + geom_point(alpha = 0.7)
+```
+
+### Exercise 12
+```{r}
+# Every Dennys and La Quinta locations within the State of Texas,USA as of the year 2014
+
+dennys_laquinta_TX = dn_lq %>% 
+  filter(state=="TX")
+dennys_laquinta_TX %>%
+  ggplot (aes(x=longitude, y= latitude, color = establishmentA))+
+  geom_point(alpha= 0.7)
+
+```
