@@ -1,0 +1,241 @@
+---
+title: "Lecture_3"
+data: "2023-09-11"
+output:
+  html_document:
+    df_print: paged
+---
+
+Attach libraries
+```{r}
+library(tidyverse)
+library(nycflights13)
+library(here)
+library(janitor)
+
+```
+
+View the flights data frame
+```{r}
+df1=flights
+```
+
+
+Assign the flights data frame to variable df1
+```{r}
+df1 <- flights 
+df1
+```
+
+
+Task 1: Flights in September from Miami
+```{r}
+df2 <-df1 |> 
+  filter((month == 9) & (origin == "MIA"))
+df2
+```
+There are no flights from Miami in this dataset. 
+
+Task 2: Flights in September going to Miami
+```{r}
+df3 <- df1 |>
+  filter(month == 9 & dest == "MIA")
+df3
+```
+There were 912 flights going to Miami from a New York City airport in September 2013.
+
+
+Task 4: Flights in January going to Miami 
+```{r}
+df4 <- df1 |>
+  filter(month == 1 & dest == "MIA")
+df4
+
+```
+There were 981 flights going to Miami in the month of January. 
+
+
+Task 5: Flights in summer going to Chicago
+
+There are two major airports in Chicago included in this data set as destination airports. Below is the airport name and its IATA code. This information was taken from https://www.cleartrip.com/tourism/airports/chicago-airport.html,
+
+Ohare International Airport: ORD
+
+Chicago Midway International Airport: MDW
+
+Since "summer" as presented in the task was not specifically defined, one way we can define it is with the general months widely associated with summer, which are June, July, and August. 
+
+
+```{r}
+df5 = df1 |>   filter((time_hour >= "2013-06-21") & (time_hour <= "2013-09-22")) |>   filter((dest == "ORD") | (dest == "MDW"))  
+```
+There were 5,770 flights to either Ohare or Midway airports in the summer months of June, July and August. 
+
+
+Task 6: Delays associated with flight number 86
+```{r}
+
+flight_nums = df1 |> filter((month == 9) & (dest == "MIA"))
+flight_nums = unique(flight_nums$flight)
+
+df6 = df1 |>
+  filter(flight == min(flight_nums), dest == "MIA")
+
+df6 |> 
+  ggplot(aes(x=dep_delay, y=arr_delay)) + geom_point()
+```
+
+# Qustions: Is fligth time affected by delayed deprture. (Do the airlibes try to "catch up"?)
+#> "Does the deprature delay change accross time of day (later in the day has more delays)
+#> Is flight time pattern affected by tiem of year
+#> Is departure delay affected by time of year
+
+# Using the "*" symbol allows you to make quick observation notes, the amount you use, determines the style of the font 
+
+## e.g.
+*Note to self*
+**Note to self**
+***Note to self***
+
+## A second vizualisation:
+**Flights from NYC to Miami **
+```{r} 
+df1 |>
+  filter(dest == "MIA") |>
+  count(origin,sort=TRUE)
+```
+### Is flight time affected by delayed departure?
+*Let's Check!*
+
+I want to examine whether the flight time is impacted by delayed departure
+
+I want to compare flight time to *planned* flight time. So we create a new variable
+
+flt_delta=arr_delay-dep_delay
+
+An flight that arrives 10 minutes late, if it departed on time, had a "delta" of 10 minutes
+
+*The origin of flights from strictly La Guardia*
+```{r}  
+df7=df1 |>
+  filter(dest == "MIA", origin=="LGA") |>
+  mutate(flt_delta=arr_delay-dep_delay)
+```
+*The origin of flights from strictly La Guardia in Scatter plot Format*
+```{r}
+df7 |>
+  ggplot(aes(x=dep_delay, y=flt_delta)) + geom_point(alpha=.1)
+```
+*The origin of flights from strictly La Guardia (y-intercept drawn at the mean flt_delta,na.rm)*
+```{r}
+df7 |>
+  ggplot(aes(x=dep_delay, y=flt_delta)) + geom_point(alpha=.1)+geom_hline(aes(yintercept=mean(flt_delta,na.rm=TRUE)))
+```
+##Is deprature delay affected by time of day? 
+## Let's check below:
+```{r}
+df7 |>
+  ggplot(aes(x=time_hour, y=dep_delay)) + geom_point(alpha=.1)+stat_smooth()+ylim(-25,120)
+```
+***Why are delays bigger in December, than in January ? -- It's probably not due to weather, i'd probably be too cold*** 
+
+*The origin of flights from strictly La Guardia (x-intercept = by hour_minute, and y-intercpet by delays*
+```{r}
+df7 |>
+  ggplot(aes(x=hour + minute/60, y=dep_delay)) + geom_point(alpha=.1)+stat_smooth()+ylim(-25,120)
+```
+
+##Observation 
+***departure delay increases across flight day***
+*The origin of flights from strictly La Guardia (colored)*
+````{r}
+df7 |>
+  mutate(day_of_week=weekdays(time_hour))|>
+  ggplot(aes(x=hour + minute/60, y=dep_delay, color = day_of_week)) + geom_point(alpha=.1)+stat_smooth()+ylim(-25,120)
+`````
+*The origin of flights from strictly La Guardia (breaking data into various subsets or faceting data applied by facet_wrap function)*
+````{r}
+df7 |>
+  mutate(day_of_week=weekdays(time_hour))|>
+  ggplot(aes(x=hour + minute/60, y=dep_delay, color = day_of_week)) + geom_point(alpha=.1)+stat_smooth()+ylim(-20,40) + facet_wrap(~day_of_week)
+`````
+
+*Download the ZipFile "DL_SelectFields.zip", by going to this website: https://www.transtats.bts.gov/DL_SelectFields.aspx?gnoyr_VQ=FIM&QO_fu146_anzr=Nv4%20Pn44vr45, filter by " Filter Geography All, Filter Year 2022, Filter Period All Months.*
+
+*After your done save the information into folder data_raw, then use line of code below, to extract the files information*
+
+*WARNING: Make sure the file path matches with that of the one below, for no errors.*
+
+````{r}
+thisfile=here("data_raw","DL_SelectFields.zip")
+
+  
+df2022=read_csv(thisfile) %>% clean_names()
+`````
+*Cleans up data format*
+##Subsetting to data of intrest
+
+Let's focus on flights from La Guardia (LGA) Airport, and eliminate cargo flights by requiring at least 1 passenger per flight
+ calls the resultant dataframe "df9"
+
+````{r}
+
+df9=df2022 |> filter(passengers > 0, origin == "LGA")
+```
+##Let's display the data onto a bar, because the best way to communicate data is to visualize it!
+```{r}
+df9 |>
+ggplot(aes(month))+geom_bar()
+```
+By default, "geom_bar" is counting the number of rows, where we have asked it to visualize the count by "months"
+
+Take a look at the dataset, and discover why counting rows is not going to give us a count of flights.*
+
+*Displaying the data we want:*
+##P.S We weight each row, by a certain value
+```{r}
+df9 |>
+ggplot(aes(month))+geom_bar(aes(weight=departures_performed))
+```
+Make some observations about this plot
+
+##A new visualization
+```{r}
+df9 |>
+ggplot(aes(month))+geom_bar(aes(weight=passengers))
+```
+##Observation 
+*most passengers numbers most probably affected due to the covid-19 pandemic*
+
+*Here's a more colorful plot below:*
+
+```{r}
+df9 |>
+ggplot(aes(month,fill=carrier_name))+geom_bar(aes(weight=departures_performed))
+```
+##Arrivals and departures from la Guardia
+```{r}
+df10 = df2022 |> filter(passengers > 0, origin == "LGA" | dest =="LGA")
+
+df10 |> ggplot(aes(month)) + geom_bar(aes(weight=passengers))
+```
+*We select month, passengers, seats, carrier name, destination, and origin of the flight for "df11".*
+```{r}
+df11 = df10 |>
+  select (month,passengers, seats,carrier_name, dest, origin)
+```
+*We also have an id*
+
+```{r}
+df12 = df10 |> select(1:5, month, contains("id"))
+```
+
+*We display the flights from various airlines on faceted histograms*
+```{r}
+df13 = df11 |> mutate(percent_loading = passengers/seats*100)
+
+df13 |> ggplot(aes(percent_loading)) + geom_histogram()+facet_wrap(~carrier_name, scales = "free_y")
+```
+
+##Obervation 
+Delta and Endeavour Air Inc. seem to be the most used flights during this time period (2022)
